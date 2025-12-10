@@ -3,6 +3,7 @@ import random
 import re
 from io import BytesIO
 from datetime import datetime, timezone, timedelta
+from urllib.parse import unquote  # 追加
 
 app = Flask(__name__)
 JST = timezone(timedelta(hours=9))
@@ -239,10 +240,10 @@ def countdown(path):
     event_name = None
     if len(parts) == 2 and re.fullmatch(r'\d{8}', parts[0]):
         yyyymmdd = parts[0]
-        event_name = parts[1]
+        event_name = unquote(parts[1])  # デコード
     elif len(parts) == 2 and re.fullmatch(r'\d{8}', parts[1]):
         yyyymmdd = parts[1]
-        event_name = parts[0]
+        event_name = unquote(parts[0])  # デコード
     if yyyymmdd and event_name:
         svg = generate_countdown_svg(yyyymmdd, event_name)
     else:
