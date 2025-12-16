@@ -3,7 +3,7 @@ import random
 import re
 from io import BytesIO
 from datetime import datetime, timezone, timedelta
-from urllib.parse import unquote  # 追加
+from urllib.parse import unquote
 
 app = Flask(__name__)
 JST = timezone(timedelta(hours=9))
@@ -205,27 +205,33 @@ def index():
         const eventInput = document.getElementById('event');
         const preview = document.getElementById('preview');
         const copyBtn = document.getElementById('copyBtn');
+
+        let debounceTimer;
         function updatePreview() {
-            const date = dateInput.value;
-            const eventName = eventInput.value;
-            if (date && eventName) {
-                const url = `/${date}/${encodeURIComponent(eventName)}`;
-                preview.src = url;
-                copyBtn.disabled = false;
-                copyBtn.onclick = () => {
-                    const fullUrl = `${window.location.origin}${url}`;
-                    navigator.clipboard.writeText(fullUrl)
-                        .then(() => {
-                            copyBtn.textContent = 'Copied!';
-                            setTimeout(() => {
-                                copyBtn.textContent = 'Copy URL';
-                            }, 2000);
-                        });
-                };
-            } else {
-                copyBtn.disabled = true;
-            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const date = dateInput.value;
+                const eventName = eventInput.value;
+                if (date && eventName) {
+                    const url = `/${date}/${encodeURIComponent(eventName)}`;
+                    preview.src = url;
+                    copyBtn.disabled = false;
+                    copyBtn.onclick = () => {
+                        const fullUrl = `${window.location.origin}${url}`;
+                        navigator.clipboard.writeText(fullUrl)
+                            .then(() => {
+                                copyBtn.textContent = 'Copied!';
+                                setTimeout(() => {
+                                    copyBtn.textContent = 'Copy URL';
+                                }, 2000);
+                            });
+                    };
+                } else {
+                    copyBtn.disabled = true;
+                }
+            }, 300);
         }
+
         dateInput.addEventListener('input', updatePreview);
         eventInput.addEventListener('input', updatePreview);
     </script>
@@ -240,10 +246,10 @@ def countdown(path):
     event_name = None
     if len(parts) == 2 and re.fullmatch(r'\d{8}', parts[0]):
         yyyymmdd = parts[0]
-        event_name = unquote(parts[1])  # デコード
+        event_name = unquote(parts[1])
     elif len(parts) == 2 and re.fullmatch(r'\d{8}', parts[1]):
         yyyymmdd = parts[1]
-        event_name = unquote(parts[0])  # デコード
+        event_name = unquote(parts[0])
     if yyyymmdd and event_name:
         svg = generate_countdown_svg(yyyymmdd, event_name)
     else:
