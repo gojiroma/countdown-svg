@@ -24,12 +24,22 @@ def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
     target_dt = datetime.strptime(target_date_str, '%Y%m%d').replace(tzinfo=JST)
     now = datetime.now(JST)
     delta = target_dt - now
-    if delta.days > 365:
-        countdown_text = format_date(target_date_str)
-        event_phrase = f"{event_name}まで"
-    elif delta.days > 0:
-        countdown_text = f"{delta.days}日"
-        event_phrase = f"{event_name}まで"
+
+    if delta.days > 0:
+        if delta.days > 365:
+            days = delta.days
+            years = days // 365
+            remaining_days = days % 365
+            months = remaining_days // 30
+            remaining_days = remaining_days % 30
+            if years > 0:
+                countdown_text = f"{years}年{months}か月{remaining_days}日"
+            else:
+                countdown_text = f"{days}日"
+            event_phrase = f"{event_name}まで"
+        else:
+            countdown_text = f"{delta.days}日"
+            event_phrase = f"{event_name}まで"
     elif delta.days == 0:
         if delta.seconds > 0:
             hours = delta.seconds // 3600
@@ -44,7 +54,15 @@ def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
                 countdown_text = f"{hours}時間{minutes}分"
                 event_phrase = f"{event_name}から"
             else:
-                countdown_text = f"{abs_delta.days}日"
+                days = abs_delta.days
+                years = days // 365
+                remaining_days = days % 365
+                months = remaining_days // 30
+                remaining_days = remaining_days % 30
+                if years > 0:
+                    countdown_text = f"{years}年{months}か月{remaining_days}日"
+                else:
+                    countdown_text = f"{days}日"
                 event_phrase = f"{event_name}から"
     else:
         abs_delta = now - target_dt
@@ -58,6 +76,7 @@ def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
         else:
             countdown_text = f"{days}日"
         event_phrase = f"{event_name}から"
+
     bg_color = random_pastel_color()
     event_font_size = 28
     countdown_font_size = 32
