@@ -198,6 +198,7 @@ def index():
             cursor: pointer;
             transition: background-color 0.3s;
             width: 100%;
+            margin-bottom: 10px;
         }
         button:hover {
             background-color: #e91e63;
@@ -205,6 +206,12 @@ def index():
         button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
+        }
+        #sendToSayBtn {
+            background-color: #64b5f6;
+        }
+        #sendToSayBtn:hover {
+            background-color: #42a5f5;
         }
     </style>
 </head>
@@ -218,12 +225,14 @@ def index():
             <iframe id="preview" width="300" height="160" frameborder="0"></iframe>
         </div>
         <button id="copyBtn" disabled>Copy URL</button>
+        <button id="sendToSayBtn" disabled>Send to say</button>
     </div>
     <script>
         const dateInput = document.getElementById('date');
         const eventInput = document.getElementById('event');
         const preview = document.getElementById('preview');
         const copyBtn = document.getElementById('copyBtn');
+        const sendToSayBtn = document.getElementById('sendToSayBtn');
 
         let debounceTimer;
         function updatePreview() {
@@ -235,6 +244,8 @@ def index():
                     const url = `/${date}/${encodeURIComponent(eventName)}`;
                     preview.src = url;
                     copyBtn.disabled = false;
+                    sendToSayBtn.disabled = false;
+
                     copyBtn.onclick = () => {
                         const fullUrl = `${window.location.origin}${url}`;
                         navigator.clipboard.writeText(fullUrl)
@@ -245,8 +256,24 @@ def index():
                                 }, 2000);
                             });
                     };
+
+                    sendToSayBtn.onclick = () => {
+                        let token = localStorage.getItem('sayToken');
+                        if (!token) {
+                            token = prompt("say.poet.blueのトークンを入力してください:");
+                            if (token) {
+                                localStorage.setItem('sayToken', token);
+                            } else {
+                                return;
+                            }
+                        }
+                        const fullUrl = `${window.location.origin}${url}`;
+                        const sayUrl = `https://say.poet.blue/?token=${token}?p=${encodeURIComponent(fullUrl)}`;
+                        window.open(sayUrl, '_blank');
+                    };
                 } else {
                     copyBtn.disabled = true;
+                    sendToSayBtn.disabled = true;
                 }
             }, 300);
         }
