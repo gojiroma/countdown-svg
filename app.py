@@ -268,7 +268,7 @@ def index():
                             }
                         }
                         const fullUrl = `${window.location.origin}${url}`;
-                        const sayUrl = `https://say.poet.blue/?token=${token}?p=${encodeURIComponent(fullUrl)}`;
+                        const sayUrl = `https://say.poet.blue/?token=${token}&p=${encodeURIComponent(fullUrl)}`;
                         window.open(sayUrl, '_blank');
                     };
                 } else {
