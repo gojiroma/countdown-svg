@@ -213,6 +213,12 @@ def index():
         #sendToSayBtn:hover {
             background-color: #42a5f5;
         }
+        #copyAsCosenseBtn {
+            background-color: #4caf50;
+        }
+        #copyAsCosenseBtn:hover {
+            background-color: #388e3c;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +232,7 @@ def index():
         </div>
         <button id="copyBtn" disabled>Copy URL</button>
         <button id="sendToSayBtn" disabled>Send to say</button>
+        <button id="copyAsCosenseBtn" disabled>Copy as Cosense link</button>
     </div>
     <script>
         const dateInput = document.getElementById('date');
@@ -233,6 +240,7 @@ def index():
         const preview = document.getElementById('preview');
         const copyBtn = document.getElementById('copyBtn');
         const sendToSayBtn = document.getElementById('sendToSayBtn');
+        const copyAsCosenseBtn = document.getElementById('copyAsCosenseBtn');
 
         let debounceTimer;
         function updatePreview() {
@@ -245,6 +253,7 @@ def index():
                     preview.src = url;
                     copyBtn.disabled = false;
                     sendToSayBtn.disabled = false;
+                    copyAsCosenseBtn.disabled = false;
 
                     copyBtn.onclick = () => {
                         const fullUrl = `${window.location.origin}${url}`;
@@ -271,9 +280,23 @@ def index():
                         const sayUrl = `https://say.poet.blue/?token=${token}&p=${encodeURIComponent(fullUrl)}`;
                         window.open(sayUrl, '_blank');
                     };
+
+                    const fullUrl = `${window.location.origin}${url}`;
+                    const cosenseUrl = `[${fullUrl}#.svg]`;
+
+                    copyAsCosenseBtn.onclick = () => {
+                        navigator.clipboard.writeText(cosenseUrl)
+                            .then(() => {
+                                copyAsCosenseBtn.textContent = 'Copied!';
+                                setTimeout(() => {
+                                    copyAsCosenseBtn.textContent = 'Copy as Cosense link';
+                                }, 2000);
+                            });
+                    };
                 } else {
                     copyBtn.disabled = true;
                     sendToSayBtn.disabled = true;
+                    copyAsCosenseBtn.disabled = true;
                 }
             }, 300);
         }
