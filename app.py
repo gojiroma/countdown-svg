@@ -20,7 +20,7 @@ def random_pastel_color():
     b = random.randint(180, 255)
     return f"rgb({r},{g},{b})"
 
-def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
+def generate_countdown_svg(target_date_str, event_name, width=300, height=160, scale=1.0):
     target_dt = datetime.strptime(target_date_str, '%Y%m%d').replace(tzinfo=JST)
     now = datetime.now(JST)
     delta = target_dt - now
@@ -78,8 +78,8 @@ def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
         event_phrase = f"{event_name}から"
 
     bg_color = random_pastel_color()
-    event_font_size = 28
-    countdown_font_size = 32
+    event_font_size = int(28 * scale)
+    countdown_font_size = int(32 * scale)
     svg_content = f"""<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="{bg_color}" />
         <style>
@@ -98,27 +98,27 @@ def generate_countdown_svg(target_date_str, event_name, width=300, height=160):
                 text-anchor: middle;
             }}
         </style>
-        <text x="{width/2}" y="45" class="event">{event_phrase}</text>
-        <text x="{width/2}" y="110" class="countdown">{countdown_text}</text>
+        <text x="{width/2}" y="{45 * scale}" class="event">{event_phrase}</text>
+        <text x="{width/2}" y="{110 * scale}" class="countdown">{countdown_text}</text>
     </svg>"""
     return svg_content
 
-def generate_error_svg(width=300, height=160):
+def generate_error_svg(width=300, height=160, scale=1.0):
     bg_color = "#ffebee"
     svg_content = f"""<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="{bg_color}" />
         <style>
             .error {{
                 font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
-                font-size: 16px;
+                font-size: {int(16 * scale)}px;
                 font-weight: bold;
                 fill: #d32f2f;
                 text-anchor: middle;
             }}
         </style>
-        <text x="150" y="50" class="error">Invalid URL format</text>
-        <text x="150" y="70" class="error" font-size="14">Use /YYYYMMDD/event_name</text>
-        <text x="150" y="90" class="error" font-size="14">or /event_name/YYYYMMDD</text>
+        <text x="{width/2}" y="{50 * scale}" class="error">Invalid URL format</text>
+        <text x="{width/2}" y="{70 * scale}" class="error" font-size="{int(14 * scale)}">Use /YYYYMMDD/event_name</text>
+        <text x="{width/2}" y="{90 * scale}" class="error" font-size="{int(14 * scale)}">or /event_name/YYYYMMDD</text>
     </svg>"""
     return svg_content
 
@@ -139,6 +139,7 @@ def index():
 <head>
     <title>Countdown SVG Generator</title>
     <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -153,13 +154,15 @@ def index():
         }
         .container {
             text-align: center;
-            width: 300px;
+            width: 90%;
+            max-width: 300px;
         }
         .inputs {
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
+            width: 100%;
         }
         input {
             padding: 12px 16px;
@@ -168,6 +171,7 @@ def index():
             font-size: 16px;
             transition: border-color 0.3s;
             box-sizing: border-box;
+            width: 100%;
         }
         input:focus {
             outline: none;
@@ -178,14 +182,16 @@ def index():
         }
         .preview-container {
             margin-bottom: 15px;
+            width: 100%;
         }
         iframe {
             border: none;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             background-color: white;
-            width: 300px;
-            height: 160px;
+            width: 100%;
+            aspect-ratio: 300/160;
+            max-width: 300px;
         }
         button {
             padding: 10px 16px;
@@ -228,7 +234,7 @@ def index():
             <input type="text" id="event" placeholder="イベント名">
         </div>
         <div class="preview-container">
-            <iframe id="preview" width="300" height="160" frameborder="0"></iframe>
+            <iframe id="preview" frameborder="0"></iframe>
         </div>
         <button id="copyBtn" disabled>Copy URL</button>
         <button id="sendToSayBtn" disabled>Send to say</button>
@@ -241,6 +247,16 @@ def index():
         const copyBtn = document.getElementById('copyBtn');
         const sendToSayBtn = document.getElementById('sendToSayBtn');
         const copyAsCosenseBtn = document.getElementById('copyAsCosenseBtn');
+
+        function resizePreview() {
+            const containerWidth = preview.parentElement.clientWidth;
+            const scale = Math.min(containerWidth / 300, 2.0);
+            preview.style.width = `${300 * scale}px`;
+            preview.style.height = `${160 * scale}px`;
+        }
+
+        window.addEventListener('resize', resizePreview);
+        window.addEventListener('load', resizePreview);
 
         let debounceTimer;
         function updatePreview() {
@@ -310,6 +326,11 @@ def index():
 
 @app.route('/<path:path>')
 def countdown(path):
+    scale = 1.0
+    user_agent = request.headers.get('User-Agent', '')
+    if 'Mobile' in user_agent or 'Android' in user_agent:
+        scale = 1.5
+
     parts = path.split('/')
     yyyymmdd = None
     event_name = None
@@ -320,9 +341,9 @@ def countdown(path):
         yyyymmdd = parts[1]
         event_name = unquote(parts[0])
     if yyyymmdd and event_name:
-        svg = generate_countdown_svg(yyyymmdd, event_name)
+        svg = generate_countdown_svg(yyyymmdd, event_name, scale=scale)
     else:
-        svg = generate_error_svg()
+        svg = generate_error_svg(scale=scale)
     svg_io = BytesIO(svg.encode('utf-8'))
     return send_file(svg_io, mimetype='image/svg+xml', as_attachment=False)
 
